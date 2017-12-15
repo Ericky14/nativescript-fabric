@@ -3543,8 +3543,8 @@ function writeXcodeData(config) {
         }
         var scriptContent =
             `
-var fs = require('fs-extra');
-var path = require('path');
+var path = require("path");
+var fs = require("fs");
 var xcode = require('xcode');
 var plist = require('simple-plist');
 
