@@ -3602,7 +3602,7 @@ module.exports = function($logger, $projectData, hookArgs) {
     }
 };
 `;
-        console.log("Writing 'Fabric-build-xcode.js' to " + appRoot + "/hooks/after-prepare");
+        console.log("Writing 'Fabric-build-xcode.js' to " + appRoot + "hooks/after-prepare");
         var scriptPath = path.join(appRoot, "hooks", "after-prepare", "Fabric-build-xcode.js");
         fs.writeFileSync(scriptPath, scriptContent);
     } catch (e) {
@@ -3678,7 +3678,7 @@ repositories {
 dependencies {
   compile('com.crashlytics.sdk.android:crashlytics:2.8.0@aar') {
     transitive = true;
-  }  
+  }
   compile('com.crashlytics.sdk.android:answers:1.4.1@aar') {
     transitive = true;
   }
@@ -3708,6 +3708,7 @@ var path = require("path");
 var fs = require("fs");
 
 module.exports = function($logger, $projectData, hookArgs) {
+  return new Promise(function(resolve, reject) {
 
     var apiKey = "${config.api_key}";
     var apiSecret = "${config.api_secret}";
@@ -3721,7 +3722,7 @@ module.exports = function($logger, $projectData, hookArgs) {
             return;
         }
 
-        console.log("Configure Fabric for Android");
+        $logger.info("Configuring Fabric for Android");
 
         var search = -1;
 
@@ -3776,7 +3777,10 @@ module.exports = function($logger, $projectData, hookArgs) {
 
         fs.writeFileSync(settingsJson, propertiesContent);
         $logger.trace('Written fabric.properties');
+        $logger.info("Finished configuration Fabric for Android");
     }
+    resolve();
+  });
 };
 `;
         console.log("Writing 'Fabric-build-gradle.js' to " + appRoot + "hooks/after-prepare");

@@ -44,6 +44,8 @@ Create a file fabric.json in the project root folder and add the API-Key and API
 
 ```
 {
+    "using_ios": true,
+    "using_android": true,
     "apiKey": "",
     "apiSecret": ""
 }

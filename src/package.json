@@ -91,8 +91,14 @@
     },
     "nativescript": {
         "platforms": {
-            "android": "3.0.0",
-            "ios": "3.0.0"
+            "android": "2.3.0",
+            "ios": "2.3.0"
+        },
+        "plugin": {
+            "nan": "true",
+            "pan": "true",
+            "core3": "true",
+            "category": "Processing"
         }
     },
     "keywords": [
