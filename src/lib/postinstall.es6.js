@@ -187,10 +187,23 @@ function writeXcodeData(config) {
             `
 var path = require("path");
 var fs = require("fs");
-var xcode = require('xcode');
-var plist = require('simple-plist');
+var xcode
+var plist;
 
 module.exports = function($logger, $projectData, hookArgs) {
+
+    // hack for node resolution not working in some cases
+    try {
+        xcode = require("xcode");
+    } catch (ignored) {
+        xcode = require("../../node_modules/nativescript-fabric/node_modules/xcode/index.js");
+    }
+    // hack for node resolution not working in some cases
+    try {
+        plist = require("simple-plist");
+    } catch (ignored) {
+        plist = require("../../node_modules/nativescript-fabric/node_modules/simple-plist/simple-plist.js");
+    }
 
     var appName = path.basename($projectData.projectDir);
     var sanitizedName = appName.split('').filter(function(c) { return /[a-zA-Z0-9]/.test(c); }).join('');
@@ -306,6 +319,9 @@ repositories {
 
 dependencies {
   compile('com.crashlytics.sdk.android:crashlytics:2.8.0@aar') {
+    transitive = true;
+  }  
+  compile('com.crashlytics.sdk.android:answers:1.4.1@aar') {
     transitive = true;
   }
 }

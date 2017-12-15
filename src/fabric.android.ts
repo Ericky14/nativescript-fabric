@@ -37,23 +37,19 @@ class CrashlyticsAndroidPlugin implements Android {
       if (application.android) {
         console.info('Fabric: Starting configuring Android platform');
         application.android.on('activityStarted', activityEventData => {
-          try {
-            console.info('Fabric: Activating Fabric kits');
-            // Enable Fabric crash reporting
-            io.fabric.sdk.android.Fabric.with(new io.fabric.sdk.android.Fabric.Builder(activityEventData.activity)
-              .kits([
-                // init Fabric with plugins
-                new com.crashlytics.android.Crashlytics(),
-                new com.crashlytics.android.answers.Answers()
-              ])
-              .debuggable(false)
-              .build()
-            );
-            this.initDone = true;
-            console.info('Fabric: Init done');
-          } catch (e) {
-            console.error('Unknown error during init of Fabric (activityStarted)', e);
-          }
+          console.info('Fabric: Activating Fabric kits');
+          // Enable Fabric crash reporting
+          io.fabric.sdk.android.Fabric.with(new io.fabric.sdk.android.Fabric.Builder(activityEventData.activity)
+            .kits([
+              // init Fabric with plugins
+              new com.crashlytics.android.Crashlytics(),
+              new com.crashlytics.android.answers.Answers()
+            ])
+            .debuggable(false)
+            .build()
+          );
+          this.initDone = true;
+          console.info('Fabric: Init done');
         });
         application.on('uncaughtError', args => {
           if (!args.android) {
