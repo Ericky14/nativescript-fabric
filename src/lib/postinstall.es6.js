@@ -179,9 +179,6 @@ function writeXcodeData(config) {
 
     console.log("Install Fabric-build-xcode hook.");
 
-    var appName = JSON.parse(fs.readFileSync(packageJsonPath)).name;
-    var sanitizedName = appName.split('').filter(function(c) { return /[a-zA-Z0-9]/.test(c); }).join('');
-
     try {
         if (!fs.existsSync(path.join(appRoot, "hooks", "after-prepare"))) {
             fs.mkdirSync(path.join(appRoot, "hooks", "after-prepare"));
