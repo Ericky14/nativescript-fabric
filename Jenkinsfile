@@ -37,8 +37,12 @@ timeout(60) {
       }
 
       stage('End2End Test') {
-        sh "cd demo && npm run build.plugin && npm i && npm run build-ios-bundle && npm run build-android-bundle"
-        sh "cd demo-angular && npm run build.plugin && npm i && npm run build-ios-bundle && npm run build-android-bundle"
+        parallel demo: {
+          sh "cd demo && npm run build.plugin && npm i && npm run build-ios-bundle && npm run build-android-bundle"
+        }, demoAngular: {
+          sh "cd demo-angular && npm run build.plugin && npm i && npm run build-ios-bundle && npm run build-android-bundle"
+        },
+        failFast: true
       }
 
       stage('Publish NPM snapshot') {
