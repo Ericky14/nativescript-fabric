@@ -283,6 +283,14 @@ function writePodFile(result) {
             `use_frameworks!
 pod 'Fabric'
 pod 'Crashlytics'
+# Crashlytics works best without bitcode
+post_install do |installer|
+    installer.pods_project.targets.each do |target|
+        target.build_configurations.each do |config|
+            config.build_settings['ENABLE_BITCODE'] = "NO"
+        end
+    end
+end
 `);
         console.log('Successfully created iOS (Pod) file.');
     } catch (e) {
