@@ -187,66 +187,68 @@ function writeXcodeData(config) {
             `
 var path = require("path");
 var fs = require("fs");
-var xcode
+var xcode;
 var plist;
 
 module.exports = function($logger, $projectData, hookArgs) {
-
-    // hack for node resolution not working in some cases
-    try {
-        xcode = require("xcode");
-    } catch (ignored) {
-        xcode = require("../../node_modules/nativescript-fabric/node_modules/xcode/index.js");
-    }
-    // hack for node resolution not working in some cases
-    try {
-        plist = require("simple-plist");
-    } catch (ignored) {
-        plist = require("../../node_modules/nativescript-fabric/node_modules/simple-plist/simple-plist.js");
-    }
-
-    var appName = path.basename($projectData.projectDir);
-    var sanitizedName = appName.split('').filter(function(c) { return /[a-zA-Z0-9]/.test(c); }).join('');
-    var apiKey = "${config.api_key}";
-    var apiSecret = "${config.api_secret}";
-    var projectPath = path.join(__dirname, "..", "..", "platforms", "ios", appName + ".xcodeproj", "project.pbxproj");
-    var plistPath = path.join(__dirname, "..", "..", "platforms", "ios", appName, appName + "-Info.plist");
-    var podsPath = path.join(__dirname, "..", "..", "platforms", "ios", "Pods");
-    if (fs.existsSync(projectPath)) {
-        var projectPathContent = fs.readFileSync(projectPath).toString();
-
-        // already added
-        if (projectPathContent.indexOf('Configure Fabric') != -1) {
-            return;
+    var platform = hookArgs.platform.toLowerCase();
+    if (platform == 'ios') {
+        // hack for node resolution not working in some cases
+        try {
+            xcode = require("xcode");
+        } catch (ignored) {
+            xcode = require("../../node_modules/nativescript-fabric/node_modules/xcode/index.js");
         }
-        $logger.info('Configure Fabric for iOS');
-
-        var xcodeProject = xcode.project(projectPath);
-        xcodeProject.parseSync();
-        var options = { shellPath: '/bin/sh', shellScript: podsPath + '/Fabric/run ' + apiKey + ' ' + apiSecret };
-        var buildPhase = xcodeProject.addBuildPhase([], 'PBXShellScriptBuildPhase', 'Configure Fabric', xcodeProject.getFirstTarget().uuid, options).buildPhase;
-        fs.writeFileSync(projectPath, xcodeProject.writeSync());
-        $logger.trace('Updateded Xcode project');
-
-        var appPlist = plist.readFileSync(plistPath);
-        plist.Fabric = {
-            APIKey: apiKey,
-            Kits: [{
-                KitInfo: '',
-                KiteName: 'Crashlytics'
-            }, {
-                KitInfo: '',
-                KiteName: 'Answers'
-            }]
+        // hack for node resolution not working in some cases
+        try {
+            plist = require("simple-plist");
+        } catch (ignored) {
+            plist = require("../../node_modules/nativescript-fabric/node_modules/simple-plist/simple-plist.js");
         }
-        plist.writeFileSync(plistPath, appPlist);
-        $logger.trace('Updateded Plist');
-    }
-};
-`;
+
+        var appName = path.basename($projectData.projectDir);
+        var sanitizedName = appName.split('').filter(function(c) { return /[a-zA-Z0-9]/.test(c); }).join('');
+        var apiKey = "${config.api_key}";
+        var apiSecret = "${config.api_secret}";
+        var projectPath = path.join(__dirname, "..", "..", "platforms", "ios", appName + ".xcodeproj", "project.pbxproj");
+        var plistPath = path.join(__dirname, "..", "..", "platforms", "ios", appName, appName + "-Info.plist");
+        var podsPath = path.join(__dirname, "..", "..", "platforms", "ios", "Pods");
+        if (fs.existsSync(projectPath)) {
+            var projectPathContent = fs.readFileSync(projectPath).toString();
+
+            // already added
+            if (projectPathContent.indexOf('Configure Fabric') != -1) {
+                return;
+            }
+            $logger.info('Configure Fabric for iOS');
+
+            var xcodeProject = xcode.project(projectPath);
+            xcodeProject.parseSync();
+            var options = { shellPath: '/bin/sh', shellScript: podsPath + '/Fabric/run ' + apiKey + ' ' + apiSecret };
+            var buildPhase = xcodeProject.addBuildPhase([], 'PBXShellScriptBuildPhase', 'Configure Fabric', xcodeProject.getFirstTarget().uuid, options).buildPhase;
+            fs.writeFileSync(projectPath, xcodeProject.writeSync());
+            $logger.trace('Updateded Xcode project');
+
+            var appPlist = plist.readFileSync(plistPath);
+            plist.Fabric = {
+                APIKey: apiKey,
+                Kits: [{
+                    KitInfo: '',
+                    KiteName: 'Crashlytics'
+                }, {
+                    KitInfo: '',
+                    KiteName: 'Answers'
+                }]
+            }
+            plist.writeFileSync(plistPath, appPlist);
+            $logger.trace('Updateded Plist');
+        }
         console.log("Writing 'Fabric-build-xcode.js' to " + appRoot + "hooks/after-prepare");
         var scriptPath = path.join(appRoot, "hooks", "after-prepare", "Fabric-build-xcode.js");
         fs.writeFileSync(scriptPath, scriptContent);
+    }
+};
+`;
     } catch (e) {
         console.log("Failed to install Fabric-build-xcode hook.");
         console.log(e);
@@ -306,8 +308,8 @@ function writeGradleFile() {
             `
 android {
   productFlavors {
-    "nativescript-fabric" {
-      dimension "nativescript-fabric"
+    "fabric" {
+      dimension "fabric"
     }
   }
 }
@@ -347,79 +349,80 @@ function writeFabricServiceGradleHook(config) {
         var scriptContent =
             `
 var path = require("path");
-var fs = require("fs");
+var fs;
 
 module.exports = function($logger, $projectData, hookArgs) {
+  var platform = hookArgs.platform.toLowerCase();
+
   return new Promise(function(resolve, reject) {
-
-    var apiKey = "${config.api_key}";
-    var apiSecret = "${config.api_secret}";
-    var buildGradlePath = path.join(__dirname, "..", "..", "platforms", "android", "build.gradle");
-    var settingsJson = path.join(__dirname, "..", "..", "platforms", "android", "src", "main", "res", "fabric.properties");
-    if (fs.existsSync(buildGradlePath)) {
-        var buildGradleContent = fs.readFileSync(buildGradlePath).toString();
-
-        // already added
-        if (buildGradleContent.indexOf('io.fabric.tools:gradle') != -1) {
-            return;
+    if (platform === 'android') {
+        // hack for node resolution not working in some cases
+        try {
+          fs = require("fs-extra");
+        } catch (ignored) {
+          fs = require("../../node_modules/nativescript-fabric/node_modules/fs-extra/lib/index.js");
         }
 
-        $logger.info("Configuring Fabric for Android");
+        var apiKey = "${config.api_key}";
+        var apiSecret = "${config.api_secret}";
+        var gradleScriptDir = path.join(__dirname, "..", "..", 'platforms', 'android', 'build-tools', 'fabric-devtools');
+        var gradleScript = path.join(gradleScriptDir, 'build.gradle');
+        var settingsGradle = path.join(__dirname, "..", "..", "platforms", "android", "settings.gradle");
+        var settingsJson = path.join(__dirname, "..", "..", "platforms", "android", "src", "main", "res", "fabric.properties");
+        fs.ensureDir(gradleScriptDir, function(err) {
 
-        var search = -1;
+            if (err) {
+                try {
+                    gradleScriptDir
+                    .split(path.sep)
+                    .reduce((currentPath, folder) => {
+                        currentPath += folder + path.sep;
+                        if (!fs.existsSync(currentPath)){
+                          fs.mkdirSync(currentPath);
+                        }
+                        return currentPath;
+                    }, '');
+                } catch(err) {
+                    $logger.error(err);
+                    reject();
+                };
+            }
 
-        search = buildGradleContent.indexOf("buildscript", 0);
-        if (search == -1) {
-            return;
-        }
+            $logger.info("Configuring Fabric for Android");
 
-        search = buildGradleContent.indexOf("repositories", search);
-        if (search == -1) {
-            return;
-        }
+            var buildGradleContent = 'buildscript {\\n';
+            buildGradleContent = buildGradleContent + '    repositories {\\n';
+            buildGradleContent = buildGradleContent + '        maven { url "https://maven.fabric.io/public" }\\n';
+            buildGradleContent = buildGradleContent + '   }\\n';
+            buildGradleContent = buildGradleContent + '\\n';
+            buildGradleContent = buildGradleContent + '    dependencies {\\n';
+            buildGradleContent = buildGradleContent + '        classpath "io.fabric.tools:gradle:1.+"\\n';
+            buildGradleContent = buildGradleContent + '    }\\n';
+            buildGradleContent = buildGradleContent + '}\\n';
+            buildGradleContent = buildGradleContent + '\\n';
+            buildGradleContent = buildGradleContent + 'apply plugin: "io.fabric"\\n';
+            fs.writeFileSync(gradleScript, buildGradleContent);
+            $logger.trace('Updated build gradle');
 
-        search = buildGradleContent.indexOf("jcenter()", search);
-        if (search == -1) {
-            return;
-        }
+            var propertiesContent = '# Contains API Secret used to validate your application. Commit to internal source control; avoid making secret public\\n';
+            propertiesContent+='apiKey = ' + apiKey + '\\n';
+            propertiesContent+='apiSecret = ' + apiSecret + '\\n';
 
-        buildGradleContent = buildGradleContent.substr(0, search - 1) + ' jcenter()\\n        maven { url "https://maven.fabric.io/public" }\\n' + buildGradleContent.substr(search + 10);
-
-        search = buildGradleContent.indexOf("dependencies", search);
-        if (search == -1) {
-            return;
-        }
-
-        search = buildGradleContent.indexOf("classpath \\"com.android.tools.build:gradle", search);
-        if (search == -1) {
-            return;
-        }
-
-        search = buildGradleContent.indexOf("\\"", search + 11);
-        if (search == -1) {
-            return;
-        }
-
-        buildGradleContent = buildGradleContent.substr(0, search + 1) + '    \\n    classpath "io.fabric.tools:gradle:1.+"\\n' + buildGradleContent.substr(search + 2);
-
-
-        search = buildGradleContent.indexOf("apply plugin: \\"com.android.application\\"", search);
-        if (search == -1) {
-            return;
-        }
-
-        buildGradleContent = buildGradleContent.substr(0, search - 1) + 'apply plugin: "com.android.application"\\napply plugin: "io.fabric"\\n' + buildGradleContent.substr(search + 39);
-
-        fs.writeFileSync(buildGradlePath, buildGradleContent);
-        $logger.trace('Updated build gradle');
-
-        var propertiesContent = '# Contains API Secret used to validate your application. Commit to internal source control; avoid making secret public\\n';
-        propertiesContent+='apiKey = ' + apiKey + '\\n';
-        propertiesContent+='apiSecret = ' + apiSecret + '\\n';
-
-        fs.writeFileSync(settingsJson, propertiesContent);
-        $logger.trace('Written fabric.properties');
-        $logger.info("Finished configuration Fabric for Android");
+            fs.writeFileSync(settingsJson, propertiesContent);
+            $logger.trace('Written fabric.properties');
+            $logger.info("Finished configuration Fabric for Android");
+        });
+        fs.ensureFile(settingsGradle, function(err) {
+          if (err) {
+            reject(err);
+          }
+          var contentSettingsGradle = fs.readFileSync(settingsGradle).toString();
+          if (!contentSettingsGradle.match(/.*fabric.*/)) {
+            contentSettingsGradle = contentSettingsGradle + '\\n\\ninclude "fabric"\\nproject(":fabric").projectDir = file("build-tools/fabric-devtools")\\n';
+            fs.writeFileSync(settingsGradle, contentSettingsGradle);
+            $logger.trace('Written settings.gradle');
+          }
+        });
     }
     resolve();
   });
