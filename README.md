@@ -46,8 +46,8 @@ Create a file fabric.json in the project root folder and add the API-Key and API
 {
     "using_ios": true,
     "using_android": true,
-    "apiKey": "",
-    "apiSecret": ""
+    "api_key": "...",
+    "api_secret": "..."
 }
 ```
 
@@ -68,30 +68,7 @@ Add the API-Key to your AndroidManifest.xml:
 ```
 
 ### iOS
-
-Add the API Key in the Info.plist:
-```
-  <key>Fabric</key>
-  <dict>
-    <key>APIKey</key>
-    <string>xxx</string>
-    <key>Kits</key>
-    <array>
-      <dict>
-        <key>KitInfo</key>
-        <dict/>
-        <key>KitName</key>
-        <string>Answers</string>
-      </dict>
-      <dict>
-        <key>KitInfo</key>
-        <dict/>
-        <key>KitName</key>
-        <string>Crashlytics</string>
-      </dict>
-    </array>
-  </dict>
-```
+No further confiugration needed
 
 ## Additional information
 
